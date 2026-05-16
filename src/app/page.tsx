@@ -37,30 +37,66 @@ export default function Home() {
   const [tg, setTg] = useState<any>(null);
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+
+  // Savatni yopish
+  const closeCart = useCallback(() => {
+    setIsCartOpen(false);
+    if (tg?.BackButton && !selectedProduct) {
+      tg.BackButton.hide();
+    }
+    if (tg?.SecondaryButton) {
+      tg.SecondaryButton.hide();
+    }
+  }, [tg, selectedProduct]);
+
+  // Savatni ochish
+  const openCart = useCallback(() => {
+    setIsCartOpen(true);
+    if (tg?.BackButton) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(closeCart);
+    }
+    if (tg?.SecondaryButton && cart.length > 0) {
+      tg.SecondaryButton.setParams({
+        text: 'SAVATNI TOZALASH',
+        color: '#ff3b30',
+        is_visible: true
+      });
+      tg.SecondaryButton.onClick(() => {
+        tg.showConfirm('Savatni butunlay tozalamoqchimisiz?', (confirmed: boolean) => {
+          if (confirmed) {
+            setCart([]);
+            closeCart();
+            tg.HapticFeedback?.notificationOccurred('warning');
+          }
+        });
+      });
+    }
+    tg?.HapticFeedback?.impactOccurred('medium');
+  }, [tg, cart.length, closeCart]);
 
   // Tafsilotlarni yopish
   const closeDetails = useCallback(() => {
     setSelectedProduct(null);
-    if ((window as any).Telegram?.WebApp?.BackButton) {
-      (window as any).Telegram.WebApp.BackButton.hide();
+    if (tg?.BackButton && !isCartOpen) {
+      tg.BackButton.hide();
     }
-  }, []);
+  }, [tg, isCartOpen]);
 
   // Mahsulotni tanlash
   const openDetails = useCallback((product: any) => {
     setSelectedProduct(product);
-    const telegram = (window as any).Telegram?.WebApp;
-    if (telegram?.BackButton) {
-      telegram.BackButton.show();
-      telegram.BackButton.onClick(closeDetails);
+    if (tg?.BackButton) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(closeDetails);
     }
-    telegram?.HapticFeedback?.impactOccurred('light');
-  }, [closeDetails]);
+    tg?.HapticFeedback?.impactOccurred('light');
+  }, [tg, closeDetails]);
 
   // Telefon raqamini so'rash (Native Telegram Popup)
-
   const handleRequestContact = useCallback(() => {
     if (!tg) return;
     tg.requestContact((sent: boolean) => {
@@ -104,17 +140,24 @@ export default function Home() {
     }
   }, [initTelegram]);
 
+  // BackButton uchun offClick
   useEffect(() => {
     return () => {
       if (tg?.BackButton) {
         tg.BackButton.offClick(closeDetails);
+        tg.BackButton.offClick(closeCart);
       }
     };
-  }, [tg, closeDetails]);
+  }, [tg, closeDetails, closeCart]);
 
   // MainButton boshqaruvi
   const onMainButtonClick = useCallback(async () => {
     if (!tg) return;
+
+    if (!isCartOpen) {
+      openCart();
+      return;
+    }
 
     if (!phoneNumber || phoneNumber.length < 7) {
       tg.showAlert('Iltimos, bog\'lanish uchun telefon raqamingizni kiriting.');
@@ -156,17 +199,17 @@ export default function Home() {
         }
       }
     );
-  }, [tg, totalPrice, user, cart, phoneNumber]);
+  }, [tg, totalPrice, user, cart, phoneNumber, isCartOpen, openCart]);
 
   useEffect(() => {
     if (!tg?.MainButton) return;
 
     if (cart.length > 0) {
-      const isPhoneValid = phoneNumber.length >= 7;
+      const isPhoneValid = isCartOpen ? (phoneNumber.length >= 7) : true;
       tg.MainButton.setParams({
-        text: isPhoneValid 
-          ? `Buyurtma berish — ${totalPrice.toLocaleString('uz-UZ')} so'm`
-          : 'Telefon raqamingizni kiriting',
+        text: isCartOpen 
+          ? (isPhoneValid ? `BUYURTMANI TASDIQLASH (${totalPrice.toLocaleString('uz-UZ')} so'm)` : 'Telefon raqamingizni kiriting')
+          : `SAVATGA O'TISH (${totalPrice.toLocaleString('uz-UZ')} so'm)`,
         color: isPhoneValid ? '#d4af37' : '#999999',
         text_color: '#ffffff',
         is_visible: true,
@@ -180,18 +223,29 @@ export default function Home() {
     return () => {
       tg.MainButton.offClick(onMainButtonClick);
     };
-  }, [tg, cart, totalPrice, onMainButtonClick, phoneNumber]);
+  }, [tg, cart, totalPrice, onMainButtonClick, phoneNumber, isCartOpen]);
 
   // Savatga qo'shish/olib tashlash
   const toggleCart = (product: any) => {
     setCart(prev => {
       const exists = prev.find(item => item.id === product.id);
-      return exists
-        ? prev.filter(item => item.id !== product.id)
-        : [...prev, product];
+      if (exists) {
+        return prev.filter(item => item.id !== product.id);
+      }
+      return [...prev, { ...product, quantity: 1 }];
     });
-
     tg?.HapticFeedback?.impactOccurred('medium');
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQty = Math.max(1, (item.quantity || 1) + delta);
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }));
+    tg?.HapticFeedback?.impactOccurred('light');
   };
 
   return (
@@ -200,7 +254,7 @@ export default function Home() {
       <header className="header-section fade-in">
         <div className="cart-header">
           <h1 className="title">Atirlar Olami</h1>
-          <div className="cart-icon-wrapper">
+          <div className="cart-icon-wrapper" onClick={openCart} style={{ cursor: 'pointer' }}>
             🛒
             {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
           </div>
@@ -235,32 +289,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
-      {/* Savat formasi (faqat savatda narsa bo'lsa chiqadi) */}
-      {cart.length > 0 && (
-        <div className="order-form slide-up">
-          <label className="form-label">Bog'lanish uchun telefon raqami:</label>
-          <div className="phone-input-wrapper">
-            <input 
-              type="tel" 
-              className="phone-input" 
-              placeholder="+998 90 123 45 67"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-            />
-            <button 
-              className="contact-btn" 
-              onClick={handleRequestContact}
-              title="Telegram raqamni ulashish"
-            >
-              👤
-            </button>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--hint)', marginTop: '8px' }}>
-            * Raqamni qo'lda kiriting yoki yonidagi tugmani bosib Telegram raqamingizni yuboring.
-          </p>
-        </div>
-      )}
 
       {/* MAHSULOT TAFSILOTLARI MODALI (DETAILS VIEW) */}
       {selectedProduct && (
@@ -300,6 +328,66 @@ export default function Home() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* SAVAT SAHIFASI (CART VIEW) */}
+      {isCartOpen && (
+        <div className="cart-view">
+          <div className="cart-title-section">
+            <h2 className="details-title" style={{ marginBottom: 0 }}>Sizning Savatingiz</h2>
+          </div>
+
+          {cart.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">🛒</div>
+              <p className="empty-state-text">Savatingiz hozircha bo'sh.</p>
+            </div>
+          ) : (
+            <>
+              <div className="cart-items-list">
+                {cart.map(item => (
+                  <div key={item.id} className="cart-item slide-up">
+                    <img src={item.image} alt={item.name} className="cart-item-image" />
+                    <div className="cart-item-info">
+                      <h4 className="cart-item-name">{item.name}</h4>
+                      <p className="cart-item-price">{item.priceLabel}</p>
+                    </div>
+                    <div className="quantity-control">
+                      <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}>−</button>
+                      <span className="qty-num">{item.quantity || 1}</span>
+                      <button className="qty-btn" onClick={() => updateQuantity(item.id, 1)}>+</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="order-form" style={{ marginTop: '32px' }}>
+                <label className="form-label">Bog'lanish uchun telefon:</label>
+                <div className="phone-input-wrapper">
+                  <input 
+                    type="tel" 
+                    className="phone-input" 
+                    placeholder="+998 90 123 45 67"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                  />
+                  <button className="contact-btn" onClick={handleRequestContact}>👤</button>
+                </div>
+              </div>
+
+              <div className="cart-summary slide-up">
+                <div className="summary-row">
+                  <span>Mahsulotlar soni:</span>
+                  <span>{cart.reduce((s, i) => s + (i.quantity || 1), 0)} ta</span>
+                </div>
+                <div className="summary-row summary-total">
+                  <span>Jami summa:</span>
+                  <span>{totalPrice.toLocaleString('uz-UZ')} so'm</span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </main>
