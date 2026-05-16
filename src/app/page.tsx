@@ -32,6 +32,7 @@ const PRODUCTS = [
 ];
 
 export default function Home() {
+  const [products, setProducts] = useState<any[]>(PRODUCTS);
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [tg, setTg] = useState<any>(null);
@@ -42,6 +43,19 @@ export default function Home() {
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
 
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+
+  // Bazadan tovarlarni yuklash
+  const fetchProducts = useCallback(async () => {
+    try {
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setProducts(data);
+      }
+    } catch (e) {
+      console.error('Fetch products error', e);
+    }
+  }, []);
 
   // Tarixni yuklash
   const loadHistory = useCallback((telegram: any) => {
@@ -179,6 +193,7 @@ export default function Home() {
 
       setTg(telegram);
       loadHistory(telegram); // Tarixni yuklash
+      fetchProducts(); // Tovarlarni yuklash
       return true;
     }
     return false;
@@ -371,7 +386,7 @@ export default function Home() {
 
       {/* Product Grid */}
       <div className="product-grid">
-        {PRODUCTS.map((product, index) => (
+        {products.map((product, index) => (
           <div
             key={product.id}
             className="slide-up"
