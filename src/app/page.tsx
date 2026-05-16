@@ -36,27 +36,40 @@ export default function Home() {
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
-  const onMainButtonClick = useCallback(() => {
+  const onMainButtonClick = useCallback(async () => {
     const tg = window.Telegram?.WebApp;
     if (tg) {
-      const orderData = {
-        user: user,
-        items: cart,
-        total: totalPrice
-      };
-
-      // Telegramga buyurtma haqida xabar yuborish va ilovani yopish
-      tg.showConfirm(`Jami ${totalPrice.toLocaleString()} so'mlik buyurtmani tasdiqlaysizmi?`, (confirmed) => {
+      tg.showConfirm(`Jami ${totalPrice.toLocaleString()} so'mlik buyurtmani tasdiqlaysizmi?`, async (confirmed) => {
         if (confirmed) {
-          tg.showPopup({
-            title: 'Muvaffaqiyatli!',
-            message: 'Buyurtmangiz qabul qilindi. Tez orada operatorlarimiz siz bilan bog\'lanishadi.',
-            buttons: [{ type: 'ok' }]
-          }, () => {
-            // Agar Keyboard button orqali ochilgan bo'lsa, ma'lumot yuboradi
-            tg.sendData(JSON.stringify(orderData));
-            tg.close();
-          });
+            tg.MainButton.showProgress();
+            
+            try {
+                const response = await fetch('/api/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user: user,
+                        items: cart,
+                        total: totalPrice
+                    })
+                });
+
+                if (response.ok) {
+                    tg.showPopup({
+                        title: 'Muvaffaqiyatli!',
+                        message: 'Buyurtmangiz egasiga yuborildi. Tez orada siz bilan bog\'lanishadi.',
+                        buttons: [{ type: 'ok' }]
+                    }, () => {
+                        tg.close();
+                    });
+                } else {
+                    tg.showAlert('Xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.');
+                }
+            } catch (error) {
+                tg.showAlert('Tarmoq xatosi. Internetni tekshiring.');
+            } finally {
+                tg.MainButton.hideProgress();
+            }
         }
       });
     }
