@@ -4,43 +4,52 @@ import { useState, useEffect, useCallback } from 'react';
 import ProductCard from '@/components/ProductCard';
 
 const PRODUCTS = [
-  {
-    id: 1,
-    name: 'Midnight Elegance',
-    description: 'Chuqur va sirli oqshom ifori',
-    price: 850000,
-    priceLabel: '850,000 so\'m',
-    image: '/images/perfume1.png'
-  },
-  {
-    id: 2,
-    name: 'Golden Aura',
-    description: 'Issiq va quyoshli, hashamatli hid',
-    price: 1200000,
-    priceLabel: '1,200,000 so\'m',
-    image: '/images/perfume2.png'
-  },
-  {
-    id: 3,
-    name: 'Pink Blossom',
-    description: 'Yengil va gulli, bahoriy ifor',
-    price: 720000,
-    priceLabel: '720,000 so\'m',
-    image: '/images/perfume3.png'
-  }
+  { id: 1, name: 'Midnight Elegance', description: 'Chuqur va sirli oqshom ifori', price: 850000, priceLabel: '850,000 so\'m', image: '/images/perfume1.png' },
+  { id: 2, name: 'Golden Aura', description: 'Issiq va quyoshli, hashamatli hid', price: 1200000, priceLabel: '1,200,000 so\'m', image: '/images/perfume2.png' },
+  { id: 3, name: 'Pink Blossom', description: 'Yengil va gulli, bahoriy ifor', price: 720000, priceLabel: '720,000 so\'m', image: '/images/perfume3.png' }
 ];
 
 export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
-  const [isTelegramReady, setIsTelegramReady] = useState<string>('Tekshirilmoqda...');
+  const [isTelegramReady, setIsTelegramReady] = useState<string>('Yuklanmoqda...');
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
-  const onMainButtonClick = useCallback(async () => {
-    const tg = window.Telegram?.WebApp;
+  const initTelegram = useCallback(() => {
+    const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      tg.showConfirm(`Jami ${totalPrice.toLocaleString()} so'mlik buyurtmani tasdiqlaysizmi?`, async (confirmed) => {
+      tg.ready();
+      tg.expand();
+      setIsTelegramReady('OK ✅');
+      if (tg.initDataUnsafe?.user) {
+        setUser(tg.initDataUnsafe.user);
+      }
+      return true;
+    }
+    return false;
+  }, []);
+
+  useEffect(() => {
+    // 1. Darhol tekshirish
+    if (!initTelegram()) {
+      // 2. Agar topilmasa, har 500ms da qayta tekshirish (jami 5 marta)
+      let count = 0;
+      const interval = setInterval(() => {
+        count++;
+        if (initTelegram() || count > 5) {
+          if (count > 5 && !initTelegram()) setIsTelegramReady('Xato ❌');
+          clearInterval(interval);
+        }
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [initTelegram]);
+
+  const onMainButtonClick = useCallback(async () => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg) {
+      tg.showConfirm(`Jami ${totalPrice.toLocaleString()} so'mlik buyurtmani tasdiqlaysizmi?`, async (confirmed: boolean) => {
         if (confirmed) {
             tg.MainButton.showProgress();
             try {
@@ -65,21 +74,7 @@ export default function Home() {
   }, [totalPrice, user, cart]);
 
   useEffect(() => {
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-      setIsTelegramReady('OK ✅');
-      if (tg.initDataUnsafe?.user) {
-        setUser(tg.initDataUnsafe.user);
-      }
-    } else {
-      setIsTelegramReady('No Telegram ❌');
-    }
-  }, []);
-
-  useEffect(() => {
-    const tg = window.Telegram?.WebApp;
+    const tg = (window as any).Telegram?.WebApp;
     if (tg && tg.MainButton) {
       if (cart.length > 0) {
         tg.MainButton.setParams({
@@ -104,18 +99,17 @@ export default function Home() {
   const toggleCart = (product: any) => {
     setCart(prev => {
       const isAlreadyInCart = prev.find(item => item.id === product.id);
-      if (isAlreadyInCart) {
-        return prev.filter(item => item.id !== product.id);
-      } else {
-        return [...prev, product];
-      }
+      return isAlreadyInCart ? prev.filter(item => item.id !== product.id) : [...prev, product];
     });
+    if ((window as any).Telegram?.WebApp?.HapticFeedback) {
+        (window as any).Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+    }
   };
 
   return (
     <main className="container">
-      <div style={{ fontSize: '9px', textAlign: 'center', opacity: 0.3 }}>
-        V-03 | Status: {isTelegramReady}
+      <div style={{ fontSize: '8px', textAlign: 'center', opacity: 0.2 }}>
+        V-04 | TG: {isTelegramReady}
       </div>
       <header className="header-section">
         <div className="cart-header">
@@ -124,17 +118,11 @@ export default function Home() {
              🛒 {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
            </div>
         </div>
+        {user && <div className="welcome-msg">Salom, <b>{user.first_name}</b>! 👋</div>}
       </header>
-
-      <div style={{ marginTop: '0.5rem' }} className="product-grid">
-        {PRODUCTS.map((product, index) => (
-          <div key={product.id} className="fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-            <ProductCard 
-                product={{ ...product, price: product.priceLabel }} 
-                onAdd={toggleCart}
-                isAdded={!!cart.find(item => item.id === product.id)}
-            />
-          </div>
+      <div className="product-grid">
+        {PRODUCTS.map(product => (
+          <ProductCard key={product.id} product={{ ...product, price: product.priceLabel }} onAdd={toggleCart} isAdded={!!cart.find(item => item.id === product.id)} />
         ))}
       </div>
     </main>
