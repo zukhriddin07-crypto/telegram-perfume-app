@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Atir Do\'koni',
-  description: 'Telegram Mini App orqali premium atirlar xarid qiling',
+  title: 'Atirlar Olami — Premium Atirlar Do\'koni',
+  description: 'Telegram Mini App orqali eng sara atirlarni xarid qiling. Tez yetkazib berish va sifat kafolati.',
 };
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="uz">
       <head>
-        {/* Telegram scriptini klassik usulda, eng tepada yuklaymiz */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <script src="https://telegram.org/js/telegram-web-app.js" async></script>
       </head>
       <body>

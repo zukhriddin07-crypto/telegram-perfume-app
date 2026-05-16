@@ -1,26 +1,433 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ========================================
+   TELEGRAM MINI APP — PREMIUM DESIGN SYSTEM
+   ======================================== */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Telegram Theme Variables (avtomatik moslashadi) */
+  --bg: var(--tg-theme-bg-color, #ffffff);
+  --text: var(--tg-theme-text-color, #1a1a2e);
+  --hint: var(--tg-theme-hint-color, #999999);
+  --link: var(--tg-theme-link-color, #2678b6);
+  --btn: var(--tg-theme-button-color, #d4af37);
+  --btn-text: var(--tg-theme-button-text-color, #ffffff);
+  --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
+  --header-bg: var(--tg-theme-header-bg-color, #ffffff);
+  --section-bg: var(--tg-theme-section-bg-color, #ffffff);
+  --section-header: var(--tg-theme-section-header-text-color, #8a8a8e);
+  --subtitle: var(--tg-theme-subtitle-text-color, #8a8a8e);
+  --separator: var(--tg-theme-section-separator-color, #e0e0e0);
+  --accent: var(--tg-theme-accent-text-color, #d4af37);
+  --destructive: var(--tg-theme-destructive-text-color, #ff3b30);
+
+  /* Custom Premium Colors */
+  --gold: #d4af37;
+  --gold-light: #f5e6b8;
+  --gold-dark: #b8971f;
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-border: rgba(212, 175, 55, 0.15);
+  --card-shadow: rgba(0, 0, 0, 0.06);
+  --glass-blur: 20px;
+
+  /* Safe Area */
+  --safe-top: var(--tg-safe-area-inset-top, 0px);
+  --safe-bottom: var(--tg-safe-area-inset-bottom, 0px);
+  --safe-left: var(--tg-safe-area-inset-left, 0px);
+  --safe-right: var(--tg-safe-area-inset-right, 0px);
+  --content-safe-top: var(--tg-content-safe-area-inset-top, 0px);
+  --content-safe-bottom: var(--tg-content-safe-area-inset-bottom, 0px);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
+/* Dark Mode Overrides */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --card-bg: rgba(30, 30, 46, 0.75);
+    --card-border: rgba(212, 175, 55, 0.1);
+    --card-shadow: rgba(0, 0, 0, 0.3);
   }
 }
 
+/* ========================================
+   GLOBAL RESET & BASE
+   ======================================== */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  overflow-x: hidden;
+  min-height: 100vh;
+  padding-top: var(--content-safe-top);
+  padding-bottom: var(--content-safe-bottom);
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================================
+   LAYOUT — CONTAINER
+   ======================================== */
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--space-md);
+  padding-bottom: calc(var(--space-xl) + var(--safe-bottom) + 60px);
+}
+
+/* ========================================
+   HEADER
+   ======================================== */
+
+.header-section {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg) var(--space-md);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  animation: headerShimmer 6s ease-in-out infinite;
+}
+
+@keyframes headerShimmer {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(10%, 10%); }
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+
+.cart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.cart-icon-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 1.3rem;
+  color: #ffffff;
+  position: relative;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #ff3b30;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: badgePop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes badgePop {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.welcome-msg {
+  margin-top: var(--space-sm);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  position: relative;
+  z-index: 1;
+  line-height: 1.4;
+}
+
+.welcome-msg b {
+  color: #ffffff;
+}
+
+/* ========================================
+   SECTION TITLES
+   ======================================== */
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--section-header);
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-xs);
+}
+
+/* ========================================
+   PRODUCT GRID
+   ======================================== */
+
+.product-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ========================================
+   PRODUCT CARD — GLASSMORPHISM
+   ======================================== */
+
+.product-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 24px var(--card-shadow);
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.3s ease;
+}
+
+.product-card:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 12px var(--card-shadow);
+}
+
+.product-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--secondary-bg);
+}
+
+.product-image-container img,
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:active .product-image-container img {
+  transform: scale(1.03);
+}
+
+.product-info {
+  padding: var(--space-md);
+}
+
+.product-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: var(--space-xs);
+  letter-spacing: -0.01em;
+  padding: var(--space-sm) var(--space-md) 0;
+}
+
+.product-desc {
+  font-size: 0.82rem;
+  color: var(--hint);
+  line-height: 1.4;
+  padding: 0 var(--space-md);
+}
+
+.product-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md) var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.product-price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: -0.01em;
+}
+
+/* ========================================
+   ADD TO CART BUTTON
+   ======================================== */
+
+.add-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background: var(--secondary-bg);
+  color: var(--text);
+  border: 2px solid transparent;
+}
+
+.add-btn:active {
+  transform: scale(0.85);
+}
+
+.add-btn.added {
+  background: var(--gold);
+  color: #ffffff;
+  border-color: var(--gold);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  animation: addPulse 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes addPulse {
+  0% { transform: scale(0.5); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.empty-state {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--hint);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.empty-state-text {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* ========================================
+   SCROLLBAR (desktop)
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--hint);
+  border-radius: 2px;
+}
+
+/* ========================================
+   UTILITY
+   ======================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }

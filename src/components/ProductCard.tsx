@@ -23,9 +23,10 @@ export default function ProductCard({ product, onAdd, isAdded }: ProductCardProp
         <Image 
           src={product.image} 
           alt={product.name} 
-          width={300} 
-          height={300} 
+          width={480} 
+          height={360} 
           className="product-image"
+          priority
         />
       </div>
       <h3 className="product-name">{product.name}</h3>
@@ -35,6 +36,7 @@ export default function ProductCard({ product, onAdd, isAdded }: ProductCardProp
         <button 
           className={`add-btn ${isAdded ? 'added' : ''}`}
           onClick={() => onAdd(product)}
+          aria-label={isAdded ? `${product.name} savatdan olib tashlash` : `${product.name} savatga qo'shish`}
         >
           {isAdded ? '✓' : '+'}
         </button>
