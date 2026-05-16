@@ -6,7 +6,8 @@ interface Product {
   id: number;
   name: string;
   description: string;
-  price: string;
+  price: number;
+  priceLabel: string;
   image: string;
 }
 
@@ -33,7 +34,7 @@ export default function ProductCard({ product, onAdd, onClick, isAdded }: Produc
       <h3 className="product-name">{product.name}</h3>
       <p className="product-desc">{product.description}</p>
       <div className="product-bottom">
-        <span className="product-price">{product.price}</span>
+        <span className="product-price">{product.priceLabel}</span>
         <button 
           className={`add-btn ${isAdded ? 'added' : ''}`}
           onClick={(e) => {

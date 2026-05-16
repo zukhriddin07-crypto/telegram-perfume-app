@@ -293,7 +293,7 @@ export default function Home() {
             style={{ animationDelay: `${0.15 + index * 0.1}s` }}
           >
             <ProductCard
-              product={{ ...product, price: product.priceLabel }}
+              product={product}
               onAdd={toggleCart}
               onClick={openDetails}
               isAdded={!!cart.find(item => item.id === product.id)}
