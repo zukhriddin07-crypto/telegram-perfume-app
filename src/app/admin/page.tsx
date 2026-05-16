@@ -32,11 +32,16 @@ export default function AdminDashboard() {
         body: file,
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Yuklashda xatolik');
+      }
+
       const newBlob = await response.json();
       setForm(prev => ({ ...prev, image: newBlob.url }));
       alert('✅ Rasm muvaffaqiyatli yuklandi!');
-    } catch (error) {
-      alert('❌ Rasmni yuklashda xatolik yuz berdi.');
+    } catch (error: any) {
+      alert(`❌ Xatolik: ${error.message}`);
     } finally {
       setIsUploading(false);
     }

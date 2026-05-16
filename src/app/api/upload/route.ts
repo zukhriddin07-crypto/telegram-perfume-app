@@ -9,14 +9,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: 'Filename is required' }, { status: 400 });
   }
 
+  if (!request.body) {
+    return NextResponse.json({ error: 'Body is required' }, { status: 400 });
+  }
+
   try {
-    const blob = await put(filename, request.body as any, {
+    const blob = await put(filename, request.body, {
       access: 'public',
     });
 
+    console.log('Blob uploaded successfully:', blob.url);
     return NextResponse.json(blob);
-  } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Upload error detail:', error.message);
+    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
   }
 }
