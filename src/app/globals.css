@@ -104,6 +104,14 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
 /* ========================================
    LAYOUT — CONTAINER
    ======================================== */

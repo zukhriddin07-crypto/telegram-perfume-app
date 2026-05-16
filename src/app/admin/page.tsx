@@ -400,7 +400,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   input: {
     width: '100%', padding: '12px 14px', background: 'rgba(255,255,255,0.08)',
     border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px',
-    color: '#fff', fontSize: '0.9rem', outline: 'none'
+    color: '#fff', fontSize: '16px', outline: 'none',
+    boxSizing: 'border-box' as const, WebkitAppearance: 'none' as const
   },
   hint: { display: 'block', fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '4px' },
   submitBtn: {
