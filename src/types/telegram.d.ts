@@ -18,6 +18,8 @@ interface TelegramWebApp {
     offClick: (callback: () => void) => void;
     setText: (text: string) => void;
     setParams: (params: any) => void;
+    showProgress: () => void;
+    hideProgress: () => void;
   };
   HapticFeedback: {
     impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
