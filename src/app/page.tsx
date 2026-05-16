@@ -35,10 +35,31 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [tg, setTg] = useState<any>(null);
   const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
+  // Tafsilotlarni yopish
+  const closeDetails = useCallback(() => {
+    setSelectedProduct(null);
+    if ((window as any).Telegram?.WebApp?.BackButton) {
+      (window as any).Telegram.WebApp.BackButton.hide();
+    }
+  }, []);
+
+  // Mahsulotni tanlash
+  const openDetails = useCallback((product: any) => {
+    setSelectedProduct(product);
+    const telegram = (window as any).Telegram?.WebApp;
+    if (telegram?.BackButton) {
+      telegram.BackButton.show();
+      telegram.BackButton.onClick(closeDetails);
+    }
+    telegram?.HapticFeedback?.impactOccurred('light');
+  }, [closeDetails]);
+
   // Telefon raqamini so'rash (Native Telegram Popup)
+
   const handleRequestContact = useCallback(() => {
     if (!tg) return;
     tg.requestContact((sent: boolean) => {
@@ -81,6 +102,14 @@ export default function Home() {
       return () => clearInterval(interval);
     }
   }, [initTelegram]);
+
+  useEffect(() => {
+    return () => {
+      if (tg?.BackButton) {
+        tg.BackButton.offClick(closeDetails);
+      }
+    };
+  }, [tg, closeDetails]);
 
   // MainButton boshqaruvi
   const onMainButtonClick = useCallback(async () => {
@@ -199,6 +228,7 @@ export default function Home() {
             <ProductCard
               product={{ ...product, price: product.priceLabel }}
               onAdd={toggleCart}
+              onClick={openDetails}
               isAdded={!!cart.find(item => item.id === product.id)}
             />
           </div>
@@ -230,7 +260,49 @@ export default function Home() {
           </p>
         </div>
       )}
+
+      {/* MAHSULOT TAFSILOTLARI MODALI (DETAILS VIEW) */}
+      {selectedProduct && (
+        <div className="details-view">
+          <div className="details-image-container">
+            <Image 
+              src={selectedProduct.image} 
+              alt={selectedProduct.name} 
+              width={600} 
+              height={600} 
+              priority
+            />
+          </div>
+          <div className="details-content">
+            <p className="details-category">Premium Atir</p>
+            <h2 className="details-title">{selectedProduct.name}</h2>
+            <div className="details-price-badge">{selectedProduct.priceLabel}</div>
+            
+            <p className="details-desc-title">Mahsulot haqida:</p>
+            <p className="details-description">
+              {selectedProduct.description} Bu ifor o'zining uzoq vaqt saqlanib qolishi va yuqori sifati bilan ajralib turadi. 
+              Mijozlarimizning sevimli tanlovi.
+            </p>
+            
+            <div className="details-action-bar">
+              <button 
+                className={`phone-input ${cart.find(item => item.id === selectedProduct.id) ? 'added' : ''}`}
+                style={{ 
+                  background: cart.find(item => item.id === selectedProduct.id) ? 'var(--gold)' : 'var(--secondary-bg)',
+                  color: cart.find(item => item.id === selectedProduct.id) ? '#ffffff' : 'var(--text)',
+                  border: 'none',
+                  fontWeight: '600'
+                }}
+                onClick={() => toggleCart(selectedProduct)}
+              >
+                {cart.find(item => item.id === selectedProduct.id) ? '✓ Savatga qo\'shilgan' : '🛒 Savatga qo\'shish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
+
 

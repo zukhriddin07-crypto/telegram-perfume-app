@@ -13,12 +13,13 @@ interface Product {
 interface ProductCardProps {
   product: Product;
   onAdd: (product: Product) => void;
+  onClick: (product: Product) => void;
   isAdded: boolean;
 }
 
-export default function ProductCard({ product, onAdd, isAdded }: ProductCardProps) {
+export default function ProductCard({ product, onAdd, onClick, isAdded }: ProductCardProps) {
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={() => onClick(product)}>
       <div className="product-image-container">
         <Image 
           src={product.image} 
@@ -35,7 +36,10 @@ export default function ProductCard({ product, onAdd, isAdded }: ProductCardProp
         <span className="product-price">{product.price}</span>
         <button 
           className={`add-btn ${isAdded ? 'added' : ''}`}
-          onClick={() => onAdd(product)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAdd(product);
+          }}
           aria-label={isAdded ? `${product.name} savatdan olib tashlash` : `${product.name} savatga qo'shish`}
         >
           {isAdded ? '✓' : '+'}
@@ -44,3 +48,4 @@ export default function ProductCard({ product, onAdd, isAdded }: ProductCardProp
     </div>
   );
 }
+
