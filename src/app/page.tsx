@@ -221,7 +221,7 @@ export default function Home() {
       tg.MainButton.setParams({
         text: isCartOpen 
           ? (isPhoneValid ? `BUYURTMANI TASDIQLASH (${totalPrice.toLocaleString('uz-UZ')} so'm)` : 'Telefon raqamingizni kiriting')
-          : `SAVATGA O'TISH (${totalPrice.toLocaleString('uz-UZ')} so'm)`,
+          : "SAVATGA O'TISH",
         color: isPhoneValid ? '#d4af37' : '#999999',
         text_color: '#ffffff',
         is_visible: true,
