@@ -6,23 +6,25 @@ const ADMIN_CHAT_ID = '541693127';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { user, items, total } = body;
+    const { user, items, total, phoneNumber } = body;
 
-    const itemsText = items.map((item: any) => `🔹 ${item.name} - ${item.price.toLocaleString()} so'm`).join('\n');
+    const itemsText = items.map((item: any) => `🔹 <b>${item.name}</b> - ${item.price.toLocaleString()} so'm`).join('\n');
     
     const message = `
-🆕 YANGI BUYURTMA! 🛍
+<b>🆕 YANGI BUYURTMA!</b> 🛍
 
-👤 Mijoz: ${user?.first_name || 'Noma\'lum'} ${user?.last_name || ''}
-🆔 Username: @${user?.username || 'yo\'q'}
+👤 <b>Mijoz:</b> ${user?.first_name || 'Noma\'lum'} ${user?.last_name || ''}
+🆔 <b>Username:</b> @${user?.username || 'yo\'q'}
+📞 <b>Telefon:</b> <code>${phoneNumber || 'Kiritilmagan'}</code>
 
-🛒 Mahsulotlar:
+🛒 <b>Mahsulotlar:</b>
 ${itemsText}
 
-💰 Jami: ${total.toLocaleString()} so'm
+💰 <b>Jami:</b> <b>${total.toLocaleString()} so'm</b>
 
 ✅ Iltimos, mijoz bilan bog'laning!
     `;
+
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     

@@ -34,8 +34,19 @@ export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   const [tg, setTg] = useState<any>(null);
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
+
+  // Telefon raqamini so'rash (Native Telegram Popup)
+  const handleRequestContact = useCallback(() => {
+    if (!tg) return;
+    tg.requestContact((sent: boolean) => {
+      if (sent) {
+        tg.HapticFeedback?.notificationOccurred('success');
+      }
+    });
+  }, [tg]);
 
   // Telegram SDK ni ishga tushirish
   const initTelegram = useCallback(() => {
@@ -45,7 +56,6 @@ export default function Home() {
       telegram.expand();
       telegram.disableVerticalSwipes();
 
-      // Header va Background ranglarini sozlash
       telegram.setHeaderColor('#b8971f');
       telegram.setBackgroundColor('#ffffff');
 
@@ -76,6 +86,11 @@ export default function Home() {
   const onMainButtonClick = useCallback(async () => {
     if (!tg) return;
 
+    if (!phoneNumber || phoneNumber.length < 7) {
+      tg.showAlert('Iltimos, bog\'lanish uchun telefon raqamingizni kiriting.');
+      return;
+    }
+
     tg.showConfirm(
       `Jami ${totalPrice.toLocaleString('uz-UZ')} so'mlik buyurtmani tasdiqlaysizmi?`,
       async (confirmed: boolean) => {
@@ -86,7 +101,7 @@ export default function Home() {
           const res = await fetch('/api/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user, items: cart, total: totalPrice })
+            body: JSON.stringify({ user, items: cart, total: totalPrice, phoneNumber })
           });
 
           if (res.ok) {
@@ -111,18 +126,21 @@ export default function Home() {
         }
       }
     );
-  }, [tg, totalPrice, user, cart]);
+  }, [tg, totalPrice, user, cart, phoneNumber]);
 
   useEffect(() => {
     if (!tg?.MainButton) return;
 
     if (cart.length > 0) {
+      const isPhoneValid = phoneNumber.length >= 7;
       tg.MainButton.setParams({
-        text: `Buyurtma berish — ${totalPrice.toLocaleString('uz-UZ')} so'm`,
-        color: '#d4af37',
+        text: isPhoneValid 
+          ? `Buyurtma berish — ${totalPrice.toLocaleString('uz-UZ')} so'm`
+          : 'Telefon raqamingizni kiriting',
+        color: isPhoneValid ? '#d4af37' : '#999999',
         text_color: '#ffffff',
         is_visible: true,
-        is_active: true
+        is_active: isPhoneValid
       });
       tg.MainButton.onClick(onMainButtonClick);
     } else {
@@ -132,7 +150,7 @@ export default function Home() {
     return () => {
       tg.MainButton.offClick(onMainButtonClick);
     };
-  }, [tg, cart, totalPrice, onMainButtonClick]);
+  }, [tg, cart, totalPrice, onMainButtonClick, phoneNumber]);
 
   // Savatga qo'shish/olib tashlash
   const toggleCart = (product: any) => {
@@ -186,6 +204,33 @@ export default function Home() {
           </div>
         ))}
       </div>
+
+      {/* Savat formasi (faqat savatda narsa bo'lsa chiqadi) */}
+      {cart.length > 0 && (
+        <div className="order-form slide-up">
+          <label className="form-label">Bog'lanish uchun telefon raqami:</label>
+          <div className="phone-input-wrapper">
+            <input 
+              type="tel" 
+              className="phone-input" 
+              placeholder="+998 90 123 45 67"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+            <button 
+              className="contact-btn" 
+              onClick={handleRequestContact}
+              title="Telegram raqamni ulashish"
+            >
+              👤
+            </button>
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'var(--hint)', marginTop: '8px' }}>
+            * Raqamni qo'lda kiriting yoki yonidagi tugmani bosib Telegram raqamingizni yuboring.
+          </p>
+        </div>
+      )}
     </main>
   );
 }
+
