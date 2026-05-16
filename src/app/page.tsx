@@ -41,60 +41,82 @@ export default function Home() {
 
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
 
-  // Savatni yopish
-  const closeCart = useCallback(() => {
-    setIsCartOpen(false);
-    if (tg?.BackButton && !selectedProduct) {
-      tg.BackButton.hide();
+  // Markazlashtirilgan Orqaga qaytish mantiqi
+  const handleBack = useCallback(() => {
+    if (selectedProduct) {
+      setSelectedProduct(null);
+    } else if (isCartOpen) {
+      setIsCartOpen(false);
     }
-    if (tg?.SecondaryButton) {
-      tg.SecondaryButton.hide();
-    }
-  }, [tg, selectedProduct]);
+    tg?.HapticFeedback?.impactOccurred('light');
+  }, [selectedProduct, isCartOpen, tg]);
 
-  // Savatni ochish
-  const openCart = useCallback(() => {
-    setIsCartOpen(true);
-    if (tg?.BackButton) {
+  // Savatni tozalash mantiqi
+  const handleClearCart = useCallback(() => {
+    if (!tg) return;
+    tg.showConfirm('Savatni butunlay tozalamoqchimisiz?', (confirmed: boolean) => {
+      if (confirmed) {
+        setCart([]);
+        setIsCartOpen(false);
+        tg.HapticFeedback?.notificationOccurred('warning');
+      }
+    });
+  }, [tg]);
+
+  useEffect(() => {
+    if (!tg) return;
+
+    // BackButton boshqaruvi
+    if (selectedProduct || isCartOpen) {
       tg.BackButton.show();
-      tg.BackButton.onClick(closeCart);
+      tg.BackButton.offClick(handleBack);
+      tg.BackButton.onClick(handleBack);
+    } else {
+      tg.BackButton.hide();
+      tg.BackButton.offClick(handleBack);
     }
-    if (tg?.SecondaryButton && cart.length > 0) {
+
+    // SecondaryButton (Savatni tozalash) boshqaruvi
+    if (isCartOpen && cart.length > 0) {
       tg.SecondaryButton.setParams({
         text: 'SAVATNI TOZALASH',
         color: '#ff3b30',
         is_visible: true
       });
-      tg.SecondaryButton.onClick(() => {
-        tg.showConfirm('Savatni butunlay tozalamoqchimisiz?', (confirmed: boolean) => {
-          if (confirmed) {
-            setCart([]);
-            closeCart();
-            tg.HapticFeedback?.notificationOccurred('warning');
-          }
-        });
-      });
+      tg.SecondaryButton.offClick(handleClearCart);
+      tg.SecondaryButton.onClick(handleClearCart);
+    } else {
+      tg.SecondaryButton.hide();
+      tg.SecondaryButton.offClick(handleClearCart);
     }
+
+    return () => {
+      tg.BackButton.offClick(handleBack);
+      tg.SecondaryButton.offClick(handleClearCart);
+    };
+  }, [tg, selectedProduct, isCartOpen, cart.length, handleBack, handleClearCart]);
+
+  // Savatni yopish
+  const closeCart = useCallback(() => {
+    setIsCartOpen(false);
+  }, []);
+
+  // Savatni ochish
+  const openCart = useCallback(() => {
+    setIsCartOpen(true);
     tg?.HapticFeedback?.impactOccurred('medium');
-  }, [tg, cart.length, closeCart]);
+  }, [tg]);
 
   // Tafsilotlarni yopish
   const closeDetails = useCallback(() => {
     setSelectedProduct(null);
-    if (tg?.BackButton && !isCartOpen) {
-      tg.BackButton.hide();
-    }
-  }, [tg, isCartOpen]);
+  }, []);
 
   // Mahsulotni tanlash
   const openDetails = useCallback((product: any) => {
     setSelectedProduct(product);
-    if (tg?.BackButton) {
-      tg.BackButton.show();
-      tg.BackButton.onClick(closeDetails);
-    }
     tg?.HapticFeedback?.impactOccurred('light');
-  }, [tg, closeDetails]);
+  }, [tg]);
 
   // Telefon raqamini so'rash (Native Telegram Popup)
   const handleRequestContact = useCallback(() => {
@@ -139,16 +161,6 @@ export default function Home() {
       return () => clearInterval(interval);
     }
   }, [initTelegram]);
-
-  // BackButton uchun offClick
-  useEffect(() => {
-    return () => {
-      if (tg?.BackButton) {
-        tg.BackButton.offClick(closeDetails);
-        tg.BackButton.offClick(closeCart);
-      }
-    };
-  }, [tg, closeDetails, closeCart]);
 
   // MainButton boshqaruvi
   const onMainButtonClick = useCallback(async () => {
