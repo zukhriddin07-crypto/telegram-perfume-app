@@ -232,21 +232,34 @@ export default function AdminDashboard() {
 
           <div style={styles.formGroup}>
             <label style={styles.label}>Tovar rasmi</label>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              {form.image && (
-                <img src={form.image} alt="Preview" style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' }} />
+            <div style={styles.imageUploadContainer}>
+              {isUploading ? (
+                <div style={styles.imagePlaceholder}>
+                  <div className="spinner">⌛</div>
+                  <p style={{ fontSize: '0.7rem', marginTop: '5px' }}>Yuklanmoqda...</p>
+                </div>
+              ) : form.image ? (
+                <div style={styles.previewWrapper}>
+                  <img src={form.image} alt="Preview" style={styles.largePreview} />
+                  <button 
+                    type="button" 
+                    onClick={() => setForm({...form, image: ''})} 
+                    style={styles.removeImageBtn}
+                  >✕</button>
+                </div>
+              ) : (
+                <label style={styles.imagePlaceholder}>
+                  <span style={{ fontSize: '2rem' }}>📸</span>
+                  <p style={{ fontSize: '0.7rem', marginTop: '5px' }}>Rasm tanlang</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                  />
+                </label>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                style={{ ...styles.input, flex: 1 }}
-                disabled={isUploading}
-              />
             </div>
-            <small style={styles.hint}>
-              {isUploading ? '⌛ Yuklanmoqda...' : 'Rasm tanlang (PNG, JPG)'}
-            </small>
           </div>
 
           <button type="submit" style={styles.submitBtn}>
@@ -321,6 +334,31 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100%', padding: '14px', marginTop: '20px', background: 'linear-gradient(135deg, #b8971f, #d4af37)',
     border: 'none', borderRadius: '14px', color: '#fff', fontSize: '1rem',
     fontWeight: '700', cursor: 'pointer'
+  },
+
+  // Image Upload Styles
+  imageUploadContainer: {
+    marginTop: '10px'
+  },
+  imagePlaceholder: {
+    width: '120px', height: '120px', borderRadius: '16px',
+    background: 'rgba(255,255,255,0.05)', border: '2px dashed rgba(255,255,255,0.15)',
+    display: 'flex', flexDirection: 'column' as const, alignItems: 'center', justifyContent: 'center',
+    cursor: 'pointer', color: 'rgba(255,255,255,0.5)'
+  },
+  previewWrapper: {
+    position: 'relative' as const, width: '120px', height: '120px'
+  },
+  largePreview: {
+    width: '120px', height: '120px', borderRadius: '16px', objectFit: 'cover' as const,
+    border: '2px solid var(--gold)'
+  },
+  removeImageBtn: {
+    position: 'absolute' as const, top: '-10px', right: '-10px',
+    width: '24px', height: '24px', borderRadius: '50%', background: '#ff3b30',
+    color: '#fff', border: 'none', fontSize: '12px', fontWeight: '800',
+    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
   },
 
   // Dashboard
