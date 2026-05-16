@@ -84,15 +84,19 @@ export default function Home() {
       if (tg.initDataUnsafe?.user) {
         setUser(tg.initDataUnsafe.user);
       }
+    }
+  }, []);
 
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
       if (cart.length > 0) {
+        tg.MainButton.setText(`BUYURTMA BERISH (${totalPrice.toLocaleString()} so'm)`);
         tg.MainButton.setParams({
-            text: `BUYURTMA BERISH (${totalPrice.toLocaleString()} so'm)`,
             color: '#d4af37',
-            text_color: '#ffffff',
-            is_visible: true,
-            is_active: true
+            text_color: '#ffffff'
         });
+        tg.MainButton.show();
         tg.MainButton.onClick(onMainButtonClick);
       } else {
         tg.MainButton.hide();
