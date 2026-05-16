@@ -33,6 +33,7 @@ const PRODUCTS = [
 export default function Home() {
   const [cart, setCart] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [isTelegramReady, setIsTelegramReady] = useState<string>('Tekshirilmoqda...');
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price, 0);
 
@@ -42,31 +43,19 @@ export default function Home() {
       tg.showConfirm(`Jami ${totalPrice.toLocaleString()} so'mlik buyurtmani tasdiqlaysizmi?`, async (confirmed) => {
         if (confirmed) {
             tg.MainButton.showProgress();
-            
             try {
                 const response = await fetch('/api/order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user: user,
-                        items: cart,
-                        total: totalPrice
-                    })
+                    body: JSON.stringify({ user, items: cart, total: totalPrice })
                 });
-
                 if (response.ok) {
-                    tg.showPopup({
-                        title: 'Muvaffaqiyatli!',
-                        message: 'Buyurtmangiz egasiga yuborildi. Tez orada siz bilan bog\'lanishadi.',
-                        buttons: [{ type: 'ok' }]
-                    }, () => {
-                        tg.close();
-                    });
+                    tg.showPopup({ title: 'Muvaffaqiyatli!', message: 'Buyurtma yuborildi!', buttons: [{ type: 'ok' }] }, () => tg.close());
                 } else {
-                    tg.showAlert('Xatolik yuz berdi. Iltimos, qaytadan urinib ko\'ring.');
+                    tg.showAlert('Xatolik yuz berdi.');
                 }
             } catch (error) {
-                tg.showAlert('Tarmoq xatosi. Internetni tekshiring.');
+                tg.showAlert('Tarmoq xatosi.');
             } finally {
                 tg.MainButton.hideProgress();
             }
@@ -80,31 +69,33 @@ export default function Home() {
     if (tg) {
       tg.ready();
       tg.expand();
-      
+      setIsTelegramReady('OK ✅');
       if (tg.initDataUnsafe?.user) {
         setUser(tg.initDataUnsafe.user);
       }
+    } else {
+      setIsTelegramReady('Xato ❌ (Telegram topilmadi)');
     }
   }, []);
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
-    if (tg) {
+    if (tg && tg.MainButton) {
       if (cart.length > 0) {
-        tg.MainButton.setText(`BUYURTMA BERISH (${totalPrice.toLocaleString()} so'm)`);
         tg.MainButton.setParams({
-            color: '#d4af37',
-            text_color: '#ffffff'
+          text: `BUYURTMA BERISH (${totalPrice.toLocaleString()} so'm)`,
+          color: '#d4af37',
+          text_color: '#ffffff',
+          is_visible: true,
+          is_active: true
         });
-        tg.MainButton.show();
         tg.MainButton.onClick(onMainButtonClick);
       } else {
         tg.MainButton.hide();
       }
     }
-
     return () => {
-      if (tg) {
+      if (tg && tg.MainButton) {
         tg.MainButton.offClick(onMainButtonClick);
       }
     };
@@ -119,14 +110,13 @@ export default function Home() {
         return [...prev, product];
       }
     });
-    
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-    }
   };
 
   return (
-    <main className="container fade-in">
+    <main className="container">
+      <div style={{ fontSize: '10px', textAlign: 'center', opacity: 0.5 }}>
+        Telegram Status: {isTelegramReady}
+      </div>
       <header className="header-section">
         <div className="cart-header">
            <h1 className="title" style={{ margin: 0 }}>Atir Do'koni</h1>
@@ -134,12 +124,6 @@ export default function Home() {
              🛒 {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
            </div>
         </div>
-        
-        {user && (
-          <div className="welcome-msg">
-            Salom, <b>{user.first_name}</b>! 👋 <br/> Premium atirlar olamiga xush kelibsiz.
-          </div>
-        )}
       </header>
 
       <div style={{ marginTop: '0.5rem' }} className="product-grid">
@@ -153,27 +137,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
-      <style jsx>{`
-        .header-section {
-          margin-bottom: 1.5rem;
-        }
-        .welcome-msg {
-          margin-top: 1rem;
-          font-size: 0.9rem;
-          color: var(--app-hint);
-          text-align: center;
-          line-height: 1.4;
-        }
-        .fade-in {
-          animation: fadeIn 0.5s ease forwards;
-          opacity: 0;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </main>
   );
 }
