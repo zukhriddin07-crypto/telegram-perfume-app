@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
 
 const ADMIN_ID = '541693127';
+
+// Upstash Redis ulanishi (Vercel avtomatik environment variable'larni qo'shadi)
+const redis = Redis.fromEnv();
 
 // Ma'lumotlarni bazadan olish
 export async function GET() {
   try {
-    const products = await kv.get('products');
+    const products = await redis.get('products');
     return NextResponse.json(products || []);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    console.error('Redis GET error:', error);
+    return NextResponse.json([], { status: 200 });
   }
 }
 
@@ -20,17 +24,19 @@ export async function POST(request: Request) {
     const { product, userId } = body;
 
     // Faqat Admin qo'sha oladi
-    if (userId.toString() !== ADMIN_ID) {
+    if (userId?.toString() !== ADMIN_ID) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const products: any[] = (await kv.get('products')) || [];
+    const existing = await redis.get('products');
+    const products: any[] = Array.isArray(existing) ? existing : [];
     const newProducts = [...products, { ...product, id: Date.now() }];
     
-    await kv.set('products', newProducts);
+    await redis.set('products', newProducts);
     
     return NextResponse.json({ success: true, products: newProducts });
   } catch (error) {
+    console.error('Redis POST error:', error);
     return NextResponse.json({ error: 'Failed to save product' }, { status: 500 });
   }
 }
@@ -46,13 +52,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const products: any[] = (await kv.get('products')) || [];
+    const existing = await redis.get('products');
+    const products: any[] = Array.isArray(existing) ? existing : [];
     const newProducts = products.filter(p => p.id.toString() !== id);
     
-    await kv.set('products', newProducts);
+    await redis.set('products', newProducts);
     
     return NextResponse.json({ success: true, products: newProducts });
   } catch (error) {
+    console.error('Redis DELETE error:', error);
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }
