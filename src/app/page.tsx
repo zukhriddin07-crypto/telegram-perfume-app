@@ -38,18 +38,46 @@ export default function Home() {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
 
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+
+  // Tarixni yuklash
+  const loadHistory = useCallback((telegram: any) => {
+    if (!telegram?.CloudStorage) return;
+    telegram.CloudStorage.getItem('order_history', (err: any, value: string) => {
+      if (!err && value) {
+        try {
+          const parsed = JSON.parse(value);
+          setHistory(Array.isArray(parsed) ? parsed : []);
+        } catch (e) {
+          console.error('History parse error', e);
+        }
+      }
+    });
+  }, []);
+
+  // Yangi buyurtmani tarixga saqlash
+  const saveOrderToHistory = useCallback((newOrder: any) => {
+    const updatedHistory = [newOrder, ...history].slice(0, 20); // Faqat oxirgi 20 ta buyurtma
+    setHistory(updatedHistory);
+    if (tg?.CloudStorage) {
+      tg.CloudStorage.setItem('order_history', JSON.stringify(updatedHistory));
+    }
+  }, [tg, history]);
 
   // Markazlashtirilgan Orqaga qaytish mantiqi
   const handleBack = useCallback(() => {
     if (selectedProduct) {
       setSelectedProduct(null);
+    } else if (isHistoryOpen) {
+      setIsHistoryOpen(false);
     } else if (isCartOpen) {
       setIsCartOpen(false);
     }
     tg?.HapticFeedback?.impactOccurred('light');
-  }, [selectedProduct, isCartOpen, tg]);
+  }, [selectedProduct, isHistoryOpen, isCartOpen, tg]);
 
   // Savatni tozalash mantiqi
   const handleClearCart = useCallback(() => {
@@ -67,7 +95,7 @@ export default function Home() {
     if (!tg) return;
 
     // BackButton boshqaruvi
-    if (selectedProduct || isCartOpen) {
+    if (selectedProduct || isCartOpen || isHistoryOpen) {
       tg.BackButton.show();
       tg.BackButton.offClick(handleBack);
       tg.BackButton.onClick(handleBack);
@@ -94,7 +122,7 @@ export default function Home() {
       tg.BackButton.offClick(handleBack);
       tg.SecondaryButton.offClick(handleClearCart);
     };
-  }, [tg, selectedProduct, isCartOpen, cart.length, handleBack, handleClearCart]);
+  }, [tg, selectedProduct, isCartOpen, isHistoryOpen, cart.length, handleBack, handleClearCart]);
 
   // Savatni yopish
   const closeCart = useCallback(() => {
@@ -104,6 +132,12 @@ export default function Home() {
   // Savatni ochish
   const openCart = useCallback(() => {
     setIsCartOpen(true);
+    tg?.HapticFeedback?.impactOccurred('medium');
+  }, [tg]);
+
+  // Tarixni ochish
+  const openHistory = useCallback(() => {
+    setIsHistoryOpen(true);
     tg?.HapticFeedback?.impactOccurred('medium');
   }, [tg]);
 
@@ -144,10 +178,11 @@ export default function Home() {
       }
 
       setTg(telegram);
+      loadHistory(telegram); // Tarixni yuklash
       return true;
     }
     return false;
-  }, []);
+  }, [loadHistory]);
 
   useEffect(() => {
     if (!initTelegram()) {
@@ -190,14 +225,25 @@ export default function Home() {
           });
 
           if (res.ok) {
+            // Tarixga saqlash
+            saveOrderToHistory({
+              id: Date.now(),
+              date: new Date().toLocaleString('uz-UZ'),
+              items: cart.map(i => `${i.name} (${i.quantity}x)`).join(', '),
+              total: totalPrice
+            });
+
             tg.HapticFeedback?.notificationOccurred('success');
             tg.showPopup(
               {
                 title: '✅ Muvaffaqiyatli!',
-                message: 'Buyurtmangiz qabul qilindi. Tez orada siz bilan bog\'lanishadi.',
+                message: 'Buyurtmangiz qabul qilindi. Tarixda saqlab qo\'yildi.',
                 buttons: [{ type: 'ok', text: 'Yaxshi' }]
               },
-              () => tg.close()
+              () => {
+                setCart([]);
+                setIsCartOpen(false);
+              }
             );
           } else {
             tg.HapticFeedback?.notificationOccurred('error');
@@ -211,7 +257,7 @@ export default function Home() {
         }
       }
     );
-  }, [tg, totalPrice, user, cart, phoneNumber, isCartOpen, openCart]);
+  }, [tg, totalPrice, user, cart, phoneNumber, isCartOpen, openCart, saveOrderToHistory]);
 
   useEffect(() => {
     if (!tg?.MainButton) return;
@@ -266,9 +312,12 @@ export default function Home() {
       <header className="header-section fade-in">
         <div className="cart-header">
           <h1 className="title">Atirlar Olami</h1>
-          <div className="cart-icon-wrapper" onClick={openCart} style={{ cursor: 'pointer' }}>
-            🛒
-            {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+          <div className="cart-icon-wrapper" style={{ gap: '12px', cursor: 'pointer' }}>
+            <span onClick={openHistory} style={{ fontSize: '0.9rem', fontWeight: '600', opacity: 0.8 }}>📋 Tarix</span>
+            <div onClick={openCart} style={{ position: 'relative' }}>
+              🛒
+              {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
+            </div>
           </div>
         </div>
         {user && (
@@ -402,8 +451,45 @@ export default function Home() {
           )}
         </div>
       )}
+
+      {/* BUYURTMALAR TARIXI (HISTORY VIEW) */}
+      {isHistoryOpen && (
+        <div className="history-view">
+          <div className="cart-title-section">
+            <h2 className="details-title" style={{ marginBottom: 0 }}>Mening Buyurtmalarim</h2>
+          </div>
+
+          {history.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📋</div>
+              <p className="empty-state-text">Sizda hali buyurtmalar yo'q.</p>
+            </div>
+          ) : (
+            <div className="history-list">
+              {history.map(order => (
+                <div key={order.id} className="history-card slide-up">
+                  <div className="history-header">
+                    <span className="history-date">{order.date}</span>
+                    <span className="history-status">Qabul qilindi</span>
+                  </div>
+                  <div className="history-items">
+                    {order.items}
+                  </div>
+                  <div className="history-total">
+                    Jami: {order.total.toLocaleString('uz-UZ')} so'm
+                  </div>
+                </div>
+              ))}
+              <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--hint)', marginTop: '20px' }}>
+                * Oxirgi 20 ta buyurtma saqlanadi
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </main>
   );
 }
+
 
 

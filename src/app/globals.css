@@ -681,10 +681,76 @@ button {
   margin-bottom: var(--space-sm);
 }
 
-.summary-total {
-  font-size: 1.3rem;
-  font-weight: 800;
+/* ========================================
+   HISTORY VIEW
+   ======================================== */
+
+.history-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: var(--space-md);
+  padding-top: calc(var(--space-xl) + var(--safe-top));
+  padding-bottom: calc(var(--space-xl) + var(--safe-bottom));
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.history-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+  box-shadow: 0 2px 8px var(--card-shadow);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: var(--space-xs);
+}
+
+.history-date {
+  font-size: 0.75rem;
+  color: var(--hint);
+  font-weight: 500;
+}
+
+.history-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #34c759;
+  text-transform: uppercase;
+}
+
+.history-items {
+  font-size: 0.85rem;
   color: var(--text);
+  line-height: 1.4;
+}
+
+.history-total {
+  margin-top: var(--space-sm);
+  font-weight: 700;
+  text-align: right;
+  color: var(--gold);
+}
+
+.history-btn {
+  background: var(--secondary-bg);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
   margin-top: var(--space-md);
+  display: inline-block;
 }
 
