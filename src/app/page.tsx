@@ -74,7 +74,7 @@ export default function Home() {
         setUser(tg.initDataUnsafe.user);
       }
     } else {
-      setIsTelegramReady('Xato ❌ (Telegram topilmadi)');
+      setIsTelegramReady('No Telegram ❌');
     }
   }, []);
 
@@ -114,12 +114,12 @@ export default function Home() {
 
   return (
     <main className="container">
-      <div style={{ fontSize: '10px', textAlign: 'center', opacity: 0.5 }}>
-        Telegram Status: {isTelegramReady}
+      <div style={{ fontSize: '9px', textAlign: 'center', opacity: 0.3 }}>
+        V-03 | Status: {isTelegramReady}
       </div>
       <header className="header-section">
         <div className="cart-header">
-           <h1 className="title" style={{ margin: 0 }}>Atir Do'koni</h1>
+           <h1 className="title" style={{ margin: 0 }}>ATIRLAR OLAMI ✨</h1>
            <div className="cart-icon-wrapper">
              🛒 {cart.length > 0 && <span className="cart-badge">{cart.length}</span>}
            </div>
