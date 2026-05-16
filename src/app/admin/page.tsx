@@ -12,12 +12,35 @@ export default function AdminDashboard() {
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [userId, setUserId] = useState<string>(ADMIN_ID);
+  const [isUploading, setIsUploading] = useState(false);
   const [form, setForm] = useState({
     name: '',
     description: '',
     price: '',
     image: ''
   });
+
+  // Rasm yuklash mantiqi
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const response = await fetch(`/api/upload?filename=${file.name}`, {
+        method: 'POST',
+        body: file,
+      });
+
+      const newBlob = await response.json();
+      setForm(prev => ({ ...prev, image: newBlob.url }));
+      alert('✅ Rasm muvaffaqiyatli yuklandi!');
+    } catch (error) {
+      alert('❌ Rasmni yuklashda xatolik yuz berdi.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Telegram SDK orqali yoki PIN orqali kirish
   useEffect(() => {
@@ -208,14 +231,22 @@ export default function AdminDashboard() {
           </div>
 
           <div style={styles.formGroup}>
-            <label style={styles.label}>Rasm manzili</label>
-            <input
-              style={styles.input}
-              value={form.image}
-              onChange={e => setForm({ ...form, image: e.target.value })}
-              placeholder="/images/perfume1.png"
-            />
-            <small style={styles.hint}>Bo'sh qoldirsangiz, standart rasm qo'yiladi</small>
+            <label style={styles.label}>Tovar rasmi</label>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              {form.image && (
+                <img src={form.image} alt="Preview" style={{ width: '50px', height: '50px', borderRadius: '8px', objectFit: 'cover' }} />
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                style={{ ...styles.input, flex: 1 }}
+                disabled={isUploading}
+              />
+            </div>
+            <small style={styles.hint}>
+              {isUploading ? '⌛ Yuklanmoqda...' : 'Rasm tanlang (PNG, JPG)'}
+            </small>
           </div>
 
           <button type="submit" style={styles.submitBtn}>
