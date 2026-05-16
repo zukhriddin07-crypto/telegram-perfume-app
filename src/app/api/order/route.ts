@@ -1,14 +1,47 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 
 const BOT_TOKEN = '8797290387:AAEPzoObVISG6ArjG95XeK5i6yGmVRCQo6c';
 const ADMIN_CHAT_ID = '541693127';
 
+// Telegram initData ma'lumotlarini tekshirish funksiyasi
+function validateInitData(initData: string) {
+  if (!initData) return false;
+
+  const urlParams = new URLSearchParams(initData);
+  const hash = urlParams.get('hash');
+  urlParams.delete('hash');
+
+  const dataCheckString = Array.from(urlParams.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, value]) => `${key}=${value}`)
+    .join('\n');
+
+  const secretKey = crypto
+    .createHmac('sha256', 'WebAppData')
+    .update(BOT_TOKEN)
+    .digest();
+
+  const calculatedHash = crypto
+    .createHmac('sha256', secretKey)
+    .update(dataCheckString)
+    .digest('hex');
+
+  return calculatedHash === hash;
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { user, items, total, phoneNumber } = body;
+    const { user, items, total, phoneNumber, initData } = body;
 
-    const itemsText = items.map((item: any) => `🔹 <b>${item.name}</b> - ${item.price.toLocaleString()} so'm`).join('\n');
+    // 🛡️ Xavfsizlik tekshiruvi
+    if (!validateInitData(initData)) {
+      console.warn('Unauthorized request attempt detected!');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const itemsText = items.map((item: any) => `🔹 <b>${item.name}</b> (${item.quantity}x) - ${(item.price * item.quantity).toLocaleString()} so'm`).join('\n');
     
     const message = `
 <b>🆕 YANGI BUYURTMA!</b> 🛍
@@ -24,7 +57,6 @@ ${itemsText}
 
 ✅ Iltimos, mijoz bilan bog'laning!
     `;
-
 
     const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
     

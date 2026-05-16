@@ -221,7 +221,13 @@ export default function Home() {
           const res = await fetch('/api/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user, items: cart, total: totalPrice, phoneNumber })
+            body: JSON.stringify({ 
+              user, 
+              items: cart, 
+              total: totalPrice, 
+              phoneNumber,
+              initData: tg.initData 
+            })
           });
 
           if (res.ok) {
