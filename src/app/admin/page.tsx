@@ -102,6 +102,13 @@ export default function AdminDashboard() {
       <div className="container" style={{ textAlign: 'center', paddingTop: '100px' }}>
         <h1 style={{ color: '#ff3b30' }}>⛔ Kirish taqiqlangan</h1>
         <p>Ushbu sahifa faqat Admin uchun.</p>
+        <div style={{ marginTop: '20px', padding: '15px', background: 'var(--secondary-bg)', borderRadius: '10px' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Sizning Telegram ID raqamingiz:</p>
+          <code style={{ fontSize: '1.2rem', fontWeight: '800', color: var(--gold) }}>{user?.id || "Aniqlanmadi (Sahifani Telegram ichida oching)"}</code>
+        </div>
+        <p style={{ fontSize: '0.8rem', marginTop: '15px', color: 'var(--hint)' }}>
+          * Agar ID "Aniqlanmadi" bo'lsa, linkni Telegram'da o'zingizga yuboring va o'sha yerdan bosing.
+        </p>
       </div>
     );
   }
