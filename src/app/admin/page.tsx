@@ -27,9 +27,12 @@ export default function AdminDashboard() {
 
     setIsUploading(true);
     try {
-      const response = await fetch(`/api/upload?filename=${file.name}`, {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
         method: 'POST',
-        body: file,
+        body: formData,
       });
 
       if (!response.ok) {
@@ -37,8 +40,8 @@ export default function AdminDashboard() {
         throw new Error(errorData.error || 'Yuklashda xatolik');
       }
 
-      const newBlob = await response.json();
-      setForm(prev => ({ ...prev, image: newBlob.url }));
+      const data = await response.json();
+      setForm(prev => ({ ...prev, image: data.url }));
       alert('✅ Rasm muvaffaqiyatli yuklandi!');
     } catch (error: any) {
       alert(`❌ Xatolik: ${error.message}`);
