@@ -197,6 +197,36 @@ export default function Home() {
     }
   }, [initTelegram]);
 
+  // Mahsulotni ulashish
+  const handleShareProduct = useCallback((product: any) => {
+    if (!tg) return;
+    const shareText = `Ko'ring, bu ajoyib atir: ${product.name} ✨\nNarxi: ${product.priceLabel}`;
+    const botUrl = `https://t.me/${tg.initDataUnsafe?.bot_inline_mode ? 'YOUR_BOT_USERNAME' : '8797290387'}`; // O'zingizning botingiz userneymini qo'ysangiz ham bo'ladi
+    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(botUrl)}&text=${encodeURIComponent(shareText)}`;
+    tg.openTelegramLink(shareUrl);
+    tg.HapticFeedback?.impactOccurred('medium');
+  }, [tg]);
+
+  // Stories'ga joylash
+  const handleShareToStory = useCallback((product: any) => {
+    if (!tg) return;
+    
+    // Telegram shareToStory funksiyasi
+    if (tg.shareToStory) {
+      const imageUrl = window.location.origin + product.image;
+      tg.shareToStory(imageUrl, {
+        text: `${product.name} - Atirlar Olami ✨`,
+        widget_link: {
+          url: `https://t.me/8797290387`, // Bot linki
+          name: "Buyurtma berish"
+        }
+      });
+    } else {
+      tg.showAlert("Kechirasiz, ushbu funksiya sizning Telegram versiyangizda hali mavjud emas.");
+    }
+    tg.HapticFeedback?.impactOccurred('heavy');
+  }, [tg]);
+
   // MainButton boshqaruvi
   const onMainButtonClick = useCallback(async () => {
     if (!tg) return;
@@ -387,12 +417,16 @@ export default function Home() {
                   background: cart.find(item => item.id === selectedProduct.id) ? 'var(--gold)' : 'var(--secondary-bg)',
                   color: cart.find(item => item.id === selectedProduct.id) ? '#ffffff' : 'var(--text)',
                   border: 'none',
-                  fontWeight: '600'
+                  fontWeight: '600',
+                  flex: 1
                 }}
                 onClick={() => toggleCart(selectedProduct)}
               >
                 {cart.find(item => item.id === selectedProduct.id) ? '✓ Savatga qo\'shilgan' : '🛒 Savatga qo\'shish'}
               </button>
+              
+              <button className="action-icon-btn" onClick={() => handleShareProduct(selectedProduct)}>📤</button>
+              <button className="action-icon-btn" onClick={() => handleShareToStory(selectedProduct)}>📸</button>
             </div>
           </div>
         </div>
